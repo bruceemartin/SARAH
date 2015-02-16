@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+# This script runs the sarah commands for Hadoop Map-Reduce. 
+
+function print_usage(){
+  echo "Usage: sarah COMMAND"
+  echo "  where COMMAND is one of:"
+  echo "    statistics          generates random sample and statistics of input and functions"
+  echo "    sample              generates random sample of input"
+  echo "    balanced-reducers   generate artifacts to balance reducers"
+  echo "    classpath           print classpath used when invoking sarah jobs"
+  echo ""
+  echo "Commands print help when invoked w/o parameters."
+}
+
+if [ $# = 0 ]; then
+  print_usage
+  exit
+fi
+
+
+SARAH_JAR=$SARAH_HOME/map-reduce/lib/sarah.jar
+
+COMMAND=$1
+case $COMMAND in
+  # usage flags
+  --help|-help|-h|help)
+    print_usage
+    exit
+    ;;
+
+  #generate statistics
+  statistics)
+    echo "Generating statistics." 1>&2
+    echo "" 1>&2
+    shift
+    echo hadoop jar $SARAH_JAR sarah.mapreduce.statistics.Statistics "$@"
+    hadoop jar $SARAH_JAR sarah.mapreduce.statistics.Statistics "$@"
+    ;;
+
+  #generate balanced-reducers artifacts
+  balanced-reducers)
+    echo "Generating balanced reducers artifacts." 1>&2
+    echo "" 1>&2
+    shift
+    echo hadoop jar $SARAH_JAR sarah.mapreduce.balance.Balance "$@"
+    hadoop jar $SARAH_JAR sarah.mapreduce.balance.Balance "$@"
+    ;;
+
+  classpath)
+    echo $CLASSPATH
+    exit
+    ;;
+
+  
+  *)
+    echo "Error: No command named \`sarah $COMMAND' was found. "
+    exit 1
+    ;;
+
+esac
+    
+

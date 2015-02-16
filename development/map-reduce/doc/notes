@@ -1,0 +1,218 @@
+Statistics:
+	DONE: input format is given by user -- mapreduce.inputformat.class
+	DONE: input key type is implied from input format
+	DONE: input value type implied from input format
+	DONE: map output key type / reducer input key type is FunctionKey
+	DONE: map output value type / reducer input value type is LongWritable
+	DONE: combiner is LongSumReducer -- good idea regardless, why ship a bunch of ones
+	DONE:  number of reducers is number of functions
+	DONE:  partitioner maps one function to one reducer, 1 reducer per function
+		Having all the keys of a function sorted and together makes generating 
+		the interval file simpler.
+			Balance simply generates sequence file by adding up values
+			Could do this in a map-only job -- one mapper per function
+			Need total number of values per function to determine number 
+			of reducers and intervals
+		Does this scale? 
+			no if number of different keys in one function in sample is huge
+		How to deal with this?
+			Generate distribution in multiple files per function
+			Balance mapper uses a total order partitioner on number of keys
+			Mapper output is key:count -- all reducers have TOS, We don't really
+			have a nice way to generate the sequence file because we need to
+			process the keys in sorted order, not in parallel, unless we somehow
+			had the accumulated count in previous partitions -- to hard.
+
+		Incremental update?  If there is a new file, how easy is it to add to count?
+			Original file already sorted and combined, 
+			New file mapped and combined
+			Partitioner maps both to same reducer per function
+			If we somehow supported multiple total sort,
+			we would still need to process original files since count code change
+
+		Need total number of keys per function and 
+		total number of values per function to calculate
+			DONE:  Define counters in statistics job, 
+			       Reducer can increment, 
+				sarah.sample.number.records
+				sarah.<function>.number.keys
+				sarah.<function>.number.values
+			DONE:  driver save statistics in HDFS
+			DONE:  change reducer to use Metrics class
+			 
+
+	Generated sample:
+	   DONE: sample output format is given by user -- sarah.random.sample.outputformat.class
+	   DONE: sample output key type is given by user -- sarah.random.sample.output.key.class
+	   DONE: sample output value type is given by user -- sarah.random.sample.output.value.class
+	   DONE: sarah.sample.size should be actual % of records
+		 need an input property sarah.target.sample.size for desired sample size
+
+	For each function:
+	   DONE: output file format is SequenceFile
+	   DONE: output key type is FunctionKey where functionName is <function> and 
+	   	 functionKey is -- sarah.<function>.output.key.class -- do we need output?
+	   DONE: output value type is LongWritable -- we are counting keys.
+	
+	   FIXED BUG:  Function output records are being double counted for total number of records after 
+		applying function or records associated with key are being half counted.  
+		Statistics produce this:
+			sarah.sample.EveningFilter.number.keys=12
+			sarah.sample.EveningFilter.number.records=30050
+			sarah.sample.IPFromLog.number.keys=20374
+			sarah.sample.IPFromLog.number.records=90910
+		BUT when adding up all of the counts for all of the keys in the functions files,
+		the sum of the counts are exactly 1/2 of the above number of records.
+
+	DONE: Seed should be included in statistics. 
+	DONE: Generate output statistics in client output, not just counters.
+	DONE: Statistics.xml file should have same order as client output.
+	DONE: Make Metrics an object so that it can be extended.
+		Invisioned extensions -- save generated statistics somewhere else
+				      -- different kinds of properties -- not just current ones
+				      -- calculating statistics in some way other than hadoop counters
+			                 e.g. can this class be reused in Sarah for Spark?
+
+	DONE: Add descriptions to properties and reports
+		Define Metric class with property name and description
+		Change PropertyNames to be MetricNames
+		Change uses of PropertyNames to use MetricNames
+		Make reports and statistics.xml use descriptions
+		Remove use of configuration from client code
+		
+
+	DONE: Make PropertyNames be part of statistics and make balance generated property names part of
+		balance -- this becomes a specification for statistics and balance.  Will Metrics work with
+		BalancePropertyNames?
+	
+
+	DONE: Change name of sarah.target.sample.size and sarah.sample.size to something more descriptive
+		sarah.sample.target.factor?  sarah.sample.factor?  Look at APIs that generate samples for
+		appropriate term.
+
+	TODO: Add properties for program and version and date/time that generated statistics -- easy
+
+	TODO: input statistics -- use identity mapper?
+		number of records  -- done
+		distribution of keys -- treat it like a function -- identity mapper
+		record size -- min, max, distribution -- do this for a function on the sample
+		estimated statistics based on sample statistics -- can be done at client -- properties:
+			
+
+	TODO: Compute record sizes 
+		done	Turn record to bytes in MultiFunctionMapper as in FunctionKey 
+		done	Make FunctionKey have extra record size 
+			  -- used for comparison (want them sorted), but not for partitioning
+			  -- reduce call has all records for a key of the same size
+			  -- multiple reduce calls has all records for the key
+			  -- 1 reducer has all records for the function.
+		done 	Update reducer to generate statistics as per function as counters/properties
+				sarah.sample.%func.min.size.record
+				sarah.sample.%func.max.size.record
+				sarah.sample.%func.total.size.record
+				sarah.sample.%func.mean.size.record
+				sarah.sample.%func.quantile25.size.record
+				sarah.sample.%func.quantile50.size.record
+				sarah.sample.%func.quantile75.size.record
+			
+			Implement quantile() function to calculate given the sorted array.
+
+		Update reducer to generate statistics per function.key as values in output file
+			Besides number of records associated with the key, it is
+			interesting to know statistics about the records associated with the key.
+
+			Balancing -- we can do it based on number of records per reducer
+				If we want to balance the number of bytes per reducer, then we 
+				actually need the function.key record data
+				To do both, we need sorted array of record sizes AND
+				per key a sorted array of record sizes
+				First sorted by key.size with comparator -- generate %
+				Sort globally to generate global %
+
+		
+			done mapper outputs (function,key,recsize), 1
+			done partitioner -- by function -- one reducer per function
+			done combiner is longSumReducer -- adds up  the instances of records of same size output for key
+			done compareTo -- sort on (function, key, recsize)
+			
+			     Array funckeyrecsize
+			     Array funcrecsize
+			     FunctionKey prevKey
+			     long minRecSizeFuncKey, maxRecSizeFuncKey
+			     long minRecSizeFunc, maxRecSizeFunc
+
+			     setup: initializeFunc(), initializeFuncRecKey()
+
+
+	TODO: make all statistics be reported via SarahMetrics
+	      for SarahMapReduceMetrics support property,counter and file output
+	      MultipleOutputs found in MultiFunctionMapper,MultiFunctionReducer and Statistics
+	
+
+	TODO: man page for statistics
+	TODO: javadoc for statistics.
+
+	TODO: incremental update of statistics -- could support addition only
+	TODO: Input data sets that are not directories -- needed for incremental update too.
+		An input property with all of the files and directories
+		Convert into list of files and dates and sizes
+		Compare input property to stored property
+	????: output seed, even if not given -- needed for incremental update. Not really random since
+		all mappers have same pseudo random number sequence.  Probably best solution is to always
+		let Java assign the key.
+
+
+Balance:
+	For each function
+	   DONE: input file format is SequenceFile -- 1 per function, 1 mapper per file
+	   DONE: mapper needs function counter values:
+		sarah.<function>.number.keys
+		sarah.<function>.number.values
+		Driver can read all of these and pass to all mappers.
+	   DONE: input key type is FunctionKey where functionName is <function> and 
+	   	functionKey is -- sarah.<function>.output.key.class -- do we need output?
+	   
+	DONE: input value type is LongWritable -- we are counting keys.
+	DONE: mapper, not reducer produces interval for function -- no need for reducer
+	FIXED BUG:  mapper saving prevKey upon each function call -- this is a problem since one
+		Hadoop reuses objects.  What did old reducer do?
+	FIXED BUG:  Last bucket not handled correctly -- looks like number of reducers needs to be +1, 
+                 but edge case of last key needs to be handled.
+	TODO??: Need to overwrite functions and preferred number of records -- add comment in text file
+
+	DONE: ouput file format is SequenceFile -- that's what the TotalOrderPartitioner wants
+	        output key is sarah.<function>.output.key.class -- we do need this so that multifile
+		output can be set up, or is SequenceFile of FunctionKey enough?
+	   	output value type is NullWritable
+
+ 	DONE: make all configuration needed for balance in stats file -- no need for extra config
+		sarah.sample.size
+		sarah.functions
+		sarah.%func.output.key.class
+	DONE: move code to read metrics to Metrics class
+	DONE: have balance use Metrics.print
+
+	TODO: sarah.partition.preferredSize -- as parameter, rather than configuration?
+	TODO: sarah.%func.partion.preferredSize -- per function?
+	TODO: run balance for some functions, not all
+	TODO: make it "balance" everywhere instead of balance-reducers
+	TODO: update balance to offer option to use record sizes per key, per reducer
+
+	TODO: man page for balance
+	TODO: javadoc for balance
+	DONE: move balance properties to BalancePropertyNames.  
+		Use SarahMapReduceMetrics just like statistics does for balance results.
+	TODO: Get results into balance tool report
+
+Visualize:
+	TODO: Implement tool that generates R graphics from statistics, balance	   
+
+Tests:
+	TODO: update tests for weblog
+	TODO: update tests for shakespeare
+	TODO: update tests for shakespeare_linenumbers
+
+
+
+
+
