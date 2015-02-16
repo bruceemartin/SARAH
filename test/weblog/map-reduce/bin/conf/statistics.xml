@@ -1,0 +1,54 @@
+<configuration>
+    <property>
+        <name>mapreduce.inputformat.class</name>
+        <value>org.apache.hadoop.mapreduce.lib.input.TextInputFormat</value>
+    </property>
+
+    <property>
+        <name>sarah.target.sample.fraction</name>
+        <value>.01</value>
+        <description>Percentage of records to be included in random sample.</description>
+    </property>
+    <property>
+        <name>sarah.sample.seed</name>
+        <value>10367</value>
+        <description>Set seed for random sample. Useful to deterministic testing</description>
+    </property>
+    <property>
+        <name>sarah.sample.outputformat.class</name>
+        <value>org.apache.hadoop.mapreduce.lib.output.TextOutputFormat</value>
+    </property>
+    <property>
+        <name>sarah.sample.output.key.class</name>
+        <value>org.apache.hadoop.io.NullWritable</value>
+    </property>
+    <property>
+        <name>sarah.sample.output.value.class</name>
+        <value>org.apache.hadoop.io.Text</value>
+    </property>
+
+
+    <property>
+    	<name>sarah.functions</name>
+    	<value>EveningFilter,IPFromLog</value>
+    </property>
+
+    <property>
+        <name>sarah.EveningFilter.class</name>
+        <value>sarah.mapreduce.test.EveningFilterMapper</value>
+    </property>
+    <property>
+        <name>sarah.EveningFilter.output.key.class</name>
+        <value>org.apache.hadoop.io.Text</value>
+    </property>
+
+    <property>
+        <name>sarah.IPFromLog.class</name>
+        <value>sarah.mapreduce.test.IPFromLog</value>
+    </property>
+    <property>
+        <name>sarah.IPFromLog.output.key.class</name>
+        <value>org.apache.hadoop.io.Text</value>
+    </property>
+
+</configuration>

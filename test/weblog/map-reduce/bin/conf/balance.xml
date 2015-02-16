@@ -1,0 +1,7 @@
+<configuration>
+<property>
+<name>sarah.partition.preferredSize</name>
+<value>100000</value>
+</property>
+
+</configuration>
