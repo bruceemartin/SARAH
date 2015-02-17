@@ -1,0 +1,25 @@
+<configuration>
+    <property>
+        <name>sarah.sample.size</name>
+        <value>.01</value>
+        <description>Percentage of records to be included in random sample.</description>
+    </property>
+    <property>
+        <name>sarah.intermediate.sample.mapper.class</name>
+        <value>sarah.sample.test.LetterMapper</value>
+        <description>Mapper used to generate intermediate records</description>
+    </property>
+    <property>
+        <name>mapreduce.inputformat.class</name>
+        <value>org.apache.hadoop.mapreduce.lib.input.KeyValueTextInputFormat</value>
+        <description>Text has line numbers as keys</description>
+    </property>
+    <property>
+       	<name>mapreduce.map.output.key.class</name>
+	    <value>org.apache.hadoop.io.Text</value>
+	</property>
+	<property>
+	    <name>mapreduce.map.output.value.class</name>
+	    <value>org.apache.hadoop.io.IntWritable</value>
+	</property>
+</configuration>

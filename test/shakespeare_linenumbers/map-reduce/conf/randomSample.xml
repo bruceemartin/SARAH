@@ -1,0 +1,12 @@
+<configuration>
+    <property>
+        <name>sarah.sample.size</name>
+        <value>.05</value>
+        <description>Percentage of records to be included in random sample.</description>
+    </property>
+    <property>
+        <name>mapreduce.inputformat.class</name>
+        <value>org.apache.hadoop.mapreduce.lib.input.KeyValueTextInputFormat</value>
+        <description>Text has line numbers as keys</description>
+    </property>
+</configuration>

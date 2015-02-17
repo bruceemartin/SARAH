@@ -1,0 +1,12 @@
+<configuration>
+    <property>
+        <name>sarah.sample.size</name>
+        <value>.05</value>
+        <description>Percentage of records to be included in random sample.</description>
+    </property>
+    <property>
+        <name>sarah.sample.nullKeys</name>
+        <value>true</value>
+        <description>Do not output any keys for TextFileOutput..</description>
+    </property>
+</configuration>
