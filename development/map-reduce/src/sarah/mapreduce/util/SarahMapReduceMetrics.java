@@ -32,6 +32,7 @@ public class SarahMapReduceMetrics implements SarahMetrics {
 	private boolean countersAdded=false;
 	private String sarahPathName;
 	private Configuration conf = null;
+	private static double conversionFactor=1000;
 
 	public SarahMapReduceMetrics(Job theJob, String pathName) {
 		job = theJob;
@@ -88,13 +89,13 @@ public class SarahMapReduceMetrics implements SarahMetrics {
 	}
 
 	@Override
-	public long getValue(SarahMetric metric) throws IOException {
+	public long getLongValue(SarahMetric metric) throws IOException {
 		// Return the value of the Hadoop counter.
 		return job.getCounters().findCounter(sarahCounterGroup, metric.name).getValue();
 	}
 
 	@Override
-	public long getValue(SarahMetric metric, String functionName) throws IOException {
+	public long getLongValue(SarahMetric metric, String functionName) throws IOException {
 		// Return the value of the Hadoop counter.
 		return job.getCounters().findCounter(sarahCounterGroup, SarahMetricNames.stringForF(metric.name,functionName)).getValue();
 	}
@@ -194,33 +195,48 @@ public class SarahMapReduceMetrics implements SarahMetrics {
 		for (SarahMetric metric: metrics) {
 			metricsForF[i++]=new SarahMetric(
 										SarahMetricNames.stringForF(metric.name,function),
-										SarahMetricNames.stringForF(metric.description,function));
+										SarahMetricNames.stringForF(metric.description,function),
+										metric.type);
 		}
 		return metricsForF;
 	}
 
 	@Override
-	public void setValue(SarahMetric metric, long amount) throws IOException {
+	public void setLongValue(SarahMetric metric, long amount) throws IOException {
 		context.getCounter(sarahCounterGroup,metric.name).setValue(amount);
 		
 	}
 
 	@Override
-	public void setValue(SarahMetric metric, String function, long amount) {
-		// TODO Auto-generated method stub
+	public void setLongValue(SarahMetric metric, String function, long amount) {
+		context.getCounter(sarahCounterGroup,SarahMetricNames.stringForF(metric.name,function)).setValue(amount);		
+	}
+
+	@Override
+	public void setDoubleValue(SarahMetric metric, double amount) throws IOException {
+		// Hadoop counters do not represent floating point values, need to convert
+		context.getCounter(sarahCounterGroup,metric.name).setValue((long)(amount*conversionFactor));
 		
 	}
 
 	@Override
-	public void setValue(SarahMetric metric, double amount) throws IOException {
-		// TODO Auto-generated method stub
+	public void setDoubleValue(SarahMetric metric, String function, double amount) {
+		// Hadoop counters do not represent floating point values, need to convert
+		context.getCounter(sarahCounterGroup,SarahMetricNames.stringForF(metric.name,function)).setValue((long)(amount*conversionFactor));		
 		
 	}
 
 	@Override
-	public void setValue(SarahMetric metric, String function, double amount) {
+	public double getDoubleValue(SarahMetric metric) throws IOException {
+		return context.getCounter(sarahCounterGroup,metric.name).getValue() / conversionFactor;
+	}
+
+	@Override
+	public double getDoubleValue(SarahMetric metric, String function)
+			throws IOException {
 		// TODO Auto-generated method stub
-		
+		return context.getCounter(sarahCounterGroup,SarahMetricNames.stringForF(metric.name,function)).getValue() / conversionFactor;		
+
 	}
 
 }

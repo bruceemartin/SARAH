@@ -10,20 +10,20 @@ import java.io.PrintStream;
  * cluster and the client.  This should probably be separated into different interfaces
  */
 public interface SarahMetrics {
-	// Client only
 	void save() throws IOException;
 	void load() throws IOException;
 	void print(PrintStream out) throws IOException;
-	long getValue(SarahMetric metric) throws IOException;
-	long getValue(SarahMetric metric, String function) throws IOException;
-	// Cluster and client
 	String[] getFunctions();
+	long getLongValue(SarahMetric metric) throws IOException;
+	void setLongValue(SarahMetric metric, long amount) throws IOException;
+	long getLongValue(SarahMetric metric, String function) throws IOException;
+	void setLongValue(SarahMetric metric, String function, long amount);
+	double getDoubleValue(SarahMetric metric) throws IOException;
+	void setDoubleValue(SarahMetric metric, double amount) throws IOException;
+	double getDoubleValue(SarahMetric metric, String function) throws IOException;
+	void setDoubleValue(SarahMetric metric, String function, double amount);
 	String getStringValue(SarahMetric metric) throws IOException;
 	String getStringValue(String metricName) throws IOException;
 	void increment(SarahMetric metric, long amount);
 	void increment(SarahMetric metric, String function, long amount);
-	void setValue(SarahMetric metric, long amount) throws IOException;
-	void setValue(SarahMetric metric, String function, long amount);
-	void setValue(SarahMetric metric, double amount) throws IOException;
-	void setValue(SarahMetric metric, String function, double amount);
 }

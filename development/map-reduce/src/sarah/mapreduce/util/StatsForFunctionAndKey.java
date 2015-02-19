@@ -9,9 +9,9 @@ import org.apache.hadoop.io.Writable;
 
 public class StatsForFunctionAndKey implements Writable {
 	public long numberOutputRecordsForKey;
-	public double minSizeRecordForKey;
-	public double maxSizeRecordForKey;
-	public double totalSizeRecordsForKey;
+	public long minSizeRecordForKey;
+	public long maxSizeRecordForKey;
+	public long totalSizeRecordsForKey;
 	public double meanSizeRecordForKey;
 	public double quantile25ForKey;
 	public double quantile50ForKey;
@@ -19,9 +19,9 @@ public class StatsForFunctionAndKey implements Writable {
 
 	public StatsForFunctionAndKey(DescriptiveStatistics statsForFunctionAndKey) {
 		numberOutputRecordsForKey = statsForFunctionAndKey.getN();
-		minSizeRecordForKey = statsForFunctionAndKey.getMin();
-		maxSizeRecordForKey = statsForFunctionAndKey.getMax();
-		totalSizeRecordsForKey = statsForFunctionAndKey.getSum();
+		minSizeRecordForKey = (long)statsForFunctionAndKey.getMin();
+		maxSizeRecordForKey = (long)statsForFunctionAndKey.getMax();
+		totalSizeRecordsForKey = (long)statsForFunctionAndKey.getSum();
 		meanSizeRecordForKey = statsForFunctionAndKey.getMean();
 		quantile25ForKey = statsForFunctionAndKey.getPercentile(25);
 		quantile50ForKey = statsForFunctionAndKey.getPercentile(50);
@@ -31,9 +31,9 @@ public class StatsForFunctionAndKey implements Writable {
 	@Override
 	public void readFields(DataInput in) throws IOException {
 		numberOutputRecordsForKey = in.readLong();
-		minSizeRecordForKey = in.readDouble();
-		maxSizeRecordForKey = in.readDouble();
-		totalSizeRecordsForKey = in.readDouble();
+		minSizeRecordForKey = in.readLong();
+		maxSizeRecordForKey = in.readLong();
+		totalSizeRecordsForKey = in.readLong();
 		meanSizeRecordForKey = in.readDouble();
 		quantile25ForKey = in.readDouble();
 		quantile50ForKey = in.readDouble();
@@ -43,9 +43,9 @@ public class StatsForFunctionAndKey implements Writable {
 	@Override
 	public void write(DataOutput out) throws IOException {
 		out.writeLong(numberOutputRecordsForKey);
-		out.writeDouble(minSizeRecordForKey);
-		out.writeDouble(maxSizeRecordForKey);
-		out.writeDouble(totalSizeRecordsForKey);
+		out.writeLong(minSizeRecordForKey);
+		out.writeLong(maxSizeRecordForKey);
+		out.writeLong(totalSizeRecordsForKey);
 		out.writeDouble(meanSizeRecordForKey);
 		out.writeDouble(quantile25ForKey);
 		out.writeDouble(quantile50ForKey);

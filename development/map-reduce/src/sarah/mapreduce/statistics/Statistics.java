@@ -79,8 +79,8 @@ public class Statistics extends Configured implements Tool {
 
 	private void computeActualSample(Job job, SarahMetrics sarahMetrics) throws IOException {
 		// Compute the actual sample size
-		long numberSampleRecords = sarahMetrics.getValue(SarahMetricNames.numberSampleRecords);
-		long numberInputRecords = sarahMetrics.getValue(SarahMetricNames.numberInputRecords);
+		long numberSampleRecords = sarahMetrics.getLongValue(SarahMetricNames.numberSampleRecords);
+		long numberInputRecords = sarahMetrics.getLongValue(SarahMetricNames.numberInputRecords);
 		String sampleAsString = String.valueOf((double)numberSampleRecords/(double)numberInputRecords);
 		job.getConfiguration().set(SarahMetricNames.sarahSampleFraction.name,sampleAsString);
 	}

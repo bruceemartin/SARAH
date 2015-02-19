@@ -26,7 +26,7 @@ import org.apache.hadoop.io.BinaryComparable;
 public class FunctionKey extends BinaryComparable implements WritableComparable<BinaryComparable>  {
 	private String functionName;
 	private WritableComparable functionKey;
-	private int recordSize=0;
+	private long recordSize=0;
 	private byte[] bytes = null;
 	private static FunctionKey singletonKey= new FunctionKey();
 	
@@ -44,6 +44,7 @@ public class FunctionKey extends BinaryComparable implements WritableComparable<
 	public static WritableComparable getSingletonFunctionKey(String userFunctionName,WritableComparable key, long recordSize) {
 		singletonKey.functionName = userFunctionName;
 		singletonKey.functionKey=key;
+		singletonKey.recordSize=recordSize;
 		return singletonKey;
 	}	
 	
@@ -73,7 +74,7 @@ public class FunctionKey extends BinaryComparable implements WritableComparable<
 	
 	private void readFields(DataInput in, boolean setToSelf) throws IOException {
 		functionName = in.readUTF();
-		recordSize = in.readInt();
+		recordSize = in.readLong();
 		try {
 			Class keyClass = Class.forName(in.readUTF());
 			functionKey = (WritableComparable) keyClass.newInstance();
@@ -95,7 +96,7 @@ public class FunctionKey extends BinaryComparable implements WritableComparable<
 	@Override
 	public void write(DataOutput out) throws IOException {
 		out.writeUTF(functionName);
-		out.writeInt(recordSize);
+		out.writeLong(recordSize);
 		out.writeUTF(functionKey.getClass().getName());
 		functionKey.write(out);
 	}
@@ -112,7 +113,10 @@ public class FunctionKey extends BinaryComparable implements WritableComparable<
 		if (compareFunctions!=0) {
 			return compareFunctions;
 		}
-		return (this.recordSize - ((FunctionKey)otherKey).recordSize);
+		long difference = (this.recordSize - ((FunctionKey)otherKey).recordSize);
+		if (difference==0) return 0;
+		if (difference>0) return 1;
+		return -1;
 	}
 	
 	@Override

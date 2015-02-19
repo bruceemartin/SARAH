@@ -69,14 +69,14 @@ public class MultiFunctionReducer<KEY> extends Reducer<FunctionKey, LongWritable
 	// because there is 1 reducer per function.
 	@Override
     protected void cleanup(Context context) throws IOException, InterruptedException {
-		sarahMetrics.setValue(SarahMetricNames.numberOutputRecordsForF, prevKey.getFunctionName(),statsForFunction.getN());
-		sarahMetrics.setValue(SarahMetricNames.minSizeRecordForF, prevKey.getFunctionName(), statsForFunction.getMin());
-		sarahMetrics.setValue(SarahMetricNames.maxSizeRecordForF, prevKey.getFunctionName(), statsForFunction.getMax());
-		sarahMetrics.setValue(SarahMetricNames.totalSizeRecordsForF, prevKey.getFunctionName(), statsForFunction.getSum());
-		sarahMetrics.setValue(SarahMetricNames.meanSizeRecordForF, prevKey.getFunctionName(), statsForFunction.getMean());
-		sarahMetrics.setValue(SarahMetricNames.quantile25ForF, prevKey.getFunctionName(), statsForFunction.getPercentile(25));
-		sarahMetrics.setValue(SarahMetricNames.quantile50ForF, prevKey.getFunctionName(), statsForFunction.getPercentile(50));
-		sarahMetrics.setValue(SarahMetricNames.quantile75ForF, prevKey.getFunctionName(), statsForFunction.getPercentile(75));
+		sarahMetrics.setLongValue(SarahMetricNames.numberOutputRecordsForF, prevKey.getFunctionName(),statsForFunction.getN());
+		sarahMetrics.setLongValue(SarahMetricNames.minSizeRecordForF, prevKey.getFunctionName(), (long)statsForFunction.getMin());
+		sarahMetrics.setLongValue(SarahMetricNames.maxSizeRecordForF, prevKey.getFunctionName(), (long)statsForFunction.getMax());
+		sarahMetrics.setLongValue(SarahMetricNames.totalSizeRecordsForF, prevKey.getFunctionName(),(long)statsForFunction.getSum());
+		sarahMetrics.setDoubleValue(SarahMetricNames.meanSizeRecordForF, prevKey.getFunctionName(), statsForFunction.getMean());
+		sarahMetrics.setDoubleValue(SarahMetricNames.percentile25ForF, prevKey.getFunctionName(), statsForFunction.getPercentile(25));
+		sarahMetrics.setDoubleValue(SarahMetricNames.percentile50ForF, prevKey.getFunctionName(), statsForFunction.getPercentile(50));
+		sarahMetrics.setDoubleValue(SarahMetricNames.percentile75ForF, prevKey.getFunctionName(), statsForFunction.getPercentile(75));
         multipleOutputs.close();
     }
 

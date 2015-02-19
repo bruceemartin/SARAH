@@ -99,7 +99,7 @@ Statistics:
 		estimated statistics based on sample statistics -- can be done at client -- properties:
 			
 
-	TODO: Compute record sizes 
+	DONE: Compute record sizes 
 		done	Turn record to bytes in MultiFunctionMapper as in FunctionKey 
 		done	Make FunctionKey have extra record size 
 			  -- used for comparison (want them sorted), but not for partitioning
@@ -115,7 +115,6 @@ Statistics:
 				sarah.sample.%func.quantile50.size.record
 				sarah.sample.%func.quantile75.size.record
 			
-			Implement quantile() function to calculate given the sorted array.
 
 		Update reducer to generate statistics per function.key as values in output file
 			Besides number of records associated with the key, it is
@@ -143,7 +142,11 @@ Statistics:
 
 			     setup: initializeFunc(), initializeFuncRecKey()
 
-
+	TODO: SarahMetrics needs to distinguish different types of metrics
+		  Currently doubles are not being divided by factor
+		  Basically need to eliminate idea of turning all sarah group counters into properties.
+		  Instead, need to use type and destination.
+		  
 	TODO: make all statistics be reported via SarahMetrics
 	      for SarahMapReduceMetrics support property,counter and file output
 	      MultipleOutputs found in MultiFunctionMapper,MultiFunctionReducer and Statistics
@@ -212,6 +215,12 @@ Tests:
 	TODO: update tests for shakespeare
 	TODO: update tests for shakespeare_linenumbers
 
+Git:
+	BUG:  cannot commit and push test directory because of access_log.4  What a pain.
+	
+Spark:
+	TODO:  refactor common code into sarah.common package
+		   use it in Spark for SARAH.
 
 
 

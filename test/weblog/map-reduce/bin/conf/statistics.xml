@@ -41,7 +41,7 @@
         <name>sarah.EveningFilter.output.key.class</name>
         <value>org.apache.hadoop.io.Text</value>
     </property>
-
+    
     <property>
         <name>sarah.IPFromLog.class</name>
         <value>sarah.mapreduce.test.IPFromLog</value>
@@ -50,5 +50,6 @@
         <name>sarah.IPFromLog.output.key.class</name>
         <value>org.apache.hadoop.io.Text</value>
     </property>
+    
 
 </configuration>
