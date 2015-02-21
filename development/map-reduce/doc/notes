@@ -97,7 +97,10 @@ Statistics:
 		distribution of keys -- treat it like a function -- identity mapper
 		record size -- min, max, distribution -- do this for a function on the sample
 		estimated statistics based on sample statistics -- can be done at client -- properties:
-			
+		
+	TODO:  when saving/printing sample statistics -- generate estimated version -- do the multiplication!
+	
+	TODO:  StatsForFunctionAndKey make it into reducer's output file, but are not named as in the SarahMetricNames class	
 
 	DONE: Compute record sizes 
 		done	Turn record to bytes in MultiFunctionMapper as in FunctionKey 
@@ -215,8 +218,6 @@ Tests:
 	TODO: update tests for shakespeare
 	TODO: update tests for shakespeare_linenumbers
 
-Git:
-	BUG:  cannot commit and push test directory because of access_log.4  What a pain.
 	
 Spark:
 	TODO:  refactor common code into sarah.common package

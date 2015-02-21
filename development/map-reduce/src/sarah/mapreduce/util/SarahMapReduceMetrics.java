@@ -20,7 +20,6 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Counter;
-import org.apache.hadoop.mapreduce.CounterGroup;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 
@@ -116,16 +115,19 @@ public class SarahMapReduceMetrics implements SarahMetrics {
 	}
 	
 	private void addCountersToConfiguration() throws IOException {
+		// This can only be done at client, after job has run
 		if (countersAdded) return;
-		Iterator<CounterGroup> counterGroups = job.getCounters().iterator();
-		while (counterGroups.hasNext()) {
-			CounterGroup cg = counterGroups.next();
-			if (cg.getName().equals(sarahCounterGroup)) {
-				Iterator<Counter> counterIterator = cg.iterator();
-				while (counterIterator.hasNext()) {
-					Counter counter = counterIterator.next();
-					conf.setLong(counter.getName(), counter.getValue());	
-				}
+		// Add all metrics with destination counter to the configuration
+		
+		Iterator<SarahMetric> counterMetrics = SarahMetric.counters.iterator();
+		while (counterMetrics.hasNext()) {
+			SarahMetric metric = counterMetrics.next();
+			Counter c = job.getCounters().findCounter(sarahCounterGroup,metric.name);
+			if (c==null) continue;
+			if (metric.type==SarahMetric.Type.Long) {
+				conf.setLong(metric.name, c.getValue());
+			} else if (metric.type==SarahMetric.Type.Double){
+				conf.setDouble(metric.name, c.getValue()/conversionFactor);
 			}
 		}
 		countersAdded=true;
@@ -196,7 +198,8 @@ public class SarahMapReduceMetrics implements SarahMetrics {
 			metricsForF[i++]=new SarahMetric(
 										SarahMetricNames.stringForF(metric.name,function),
 										SarahMetricNames.stringForF(metric.description,function),
-										metric.type);
+										metric.type,
+										metric.destination);
 		}
 		return metricsForF;
 	}
@@ -234,7 +237,6 @@ public class SarahMapReduceMetrics implements SarahMetrics {
 	@Override
 	public double getDoubleValue(SarahMetric metric, String function)
 			throws IOException {
-		// TODO Auto-generated method stub
 		return context.getCounter(sarahCounterGroup,SarahMetricNames.stringForF(metric.name,function)).getValue() / conversionFactor;		
 
 	}
