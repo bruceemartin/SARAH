@@ -3,7 +3,7 @@ package sarah.mapreduce.statistics;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.WritableComparator;
 
-import sarah.mapreduce.util.FunctionKey;
+import sarah.mapreduce.metrics.FunctionKey;
 
 public class FunctionKeyGroupingComparator extends WritableComparator {
 

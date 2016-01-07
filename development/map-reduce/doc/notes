@@ -224,5 +224,68 @@ Spark:
 		   use it in Spark for SARAH.
 
 
-
-
+Refactoring TODO
+	TODO:	Make sure SarahMetric hierarchy has correct visibility and overrides
+	
+	TODO:	Implement CountedDoubleMapReduceMetric completely and correctly
+	
+	TODO:	Set metric values from counters (for client after job runs)
+			Still needs to implement setLong / setDouble in MapReduceBase
+			Need to understand how to have dynamically named properties too.
+	
+	DONE:	Set metric values from configuration (for client startup and task startup)
+	
+	DONE:   Put save functionality to files in base -- let different subclasses reuse or change
+			
+	TODO:	Make sure service and metrics are completely implemented.
+			
+	TODO:   Run and debug
+	
+	TODO:	Move MultiFileOutput from client/reducer into MapReduceMetricService
+	
+	TODO:   BalanceSarahMetrics needs BalanceSarahMetricService
+	
+		    Check defaults for setLong when obtained from configuration -- seed in particular and others
+	
+	value is 2.7, increment by 1 should be 3.7
+	counter value should be 27000 and then 37000
+	
+	
+	How do base metrics work?
+	SARAH computes and stores a set of base metrics.  
+	The base metrics are defined in the singleton SarahMetrics class.
+	Tools can depend on the base metrics at compile time by using the members of SarahMetrics.
+	Each base metric is a member of that SarahMetrics.
+	Each base metric is an instance of SarahMetric or subclass.
+	A SarahMetric represents a single metric or a class of metrics, distinguished by function name.
+		The metrics that can be distinguished by function name are limited to a set of function names.
+		The constructor to SarahMetrics takes an array of function names.
+	Some of the base SarahMetrics are CountedDoubleSarahMetric or CountedLongSarahMetric.
+	These metrics are counted, that is tools can increment them.
+	SARAH base metrics can be saved in a file by invoking SarahMetricService.save()
+		SarahMetricServiceBase constructor is given a FileSystem.
+	SARAH base metrics can be "pretty printed" as XML or Java properties by invoking SarahMetricService.print()
+	SARAH base metrics are "grouped" for ease of understanding and presentation.
+		The groups are members of SarahMetrics.  They are arrays of SarahMetric.
+		The groups are:
+			functionMetrics
+			inputDataSetMetrics
+			sampleMetrics
+			sampleFunctionMetrics
+			sampleFunctionKeyMetrics
+			extendedMetrics
+	SARAH base metrics can be read from a file.  
+		This is to pass values from one tool to another.
+		SARAHMetrics 
+	SARAH base metrics does not define how metrics are shared between processes
+	
+	Supported extensions:
+	Subclasses can change the base behavior of using the file system to store metrics.
+		Implement SarahMetricService to use something other than the file system.
+	Subclasses can extend the SarahMetric and Counted*SarahMetric classes.
+		Extend the classes and replace the metric instances in SarahMetrics
+	Subclasses can add additional extended metrics.
+		Extended metrics should be added to the extendedMetrics group.
+		The additional metrics will be saved, printed and read by the base classes.
+	Subclasses can define how metrics are shared between processes
+	

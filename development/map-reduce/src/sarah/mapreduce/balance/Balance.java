@@ -17,9 +17,8 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import sarah.mapreduce.util.SarahMapReduceMetrics;
-import sarah.mapreduce.util.SarahMetricNames;
-import sarah.mapreduce.util.SarahMetrics;
+import sarah.metrics.SarahMetrics;
+import sarah.metrics.SarahMetricService;
 
 
 
@@ -34,6 +33,8 @@ import sarah.mapreduce.util.SarahMetrics;
 public class Balance extends Configured implements Tool {
 
 	private String baseDir="";
+	private SarahMetricService sarahMetricService;
+	
 	@Override
 	public int run(String[] args) throws Exception {
 		if (args.length != 1) {
@@ -43,8 +44,8 @@ public class Balance extends Configured implements Tool {
 		}
 		baseDir = args[0];
 		Job job = Job.getInstance(getConf());
-		SarahMetrics sarahMetrics = new SarahMapReduceMetrics(job,baseDir+".sarah");
-		sarahMetrics.load();
+		String sarahPathName = args[0]+".sarah";
+		sarahMetricService = new BalanceMetricService(job,sarahPathName);
 		job.setJarByClass(Balance.class);
 		job.setJobName("sarah balanced-reducers");
 		buildInputsAndOutputs(job);
@@ -52,7 +53,7 @@ public class Balance extends Configured implements Tool {
 		job.setNumReduceTasks(0);
 		boolean success = job.waitForCompletion(true);
 		System.out.print("Balanced reducers using the following properties: ");
-		sarahMetrics.print(System.out);
+		sarahMetricService.print(System.out);
 		return success ? 0 : 1;
 	}
 
@@ -61,13 +62,12 @@ public class Balance extends Configured implements Tool {
 		// Need to handle missing properties gracefully.
 		// Keeps default output files from being created. 
 		LazyOutputFormat.setOutputFormatClass(job, TextOutputFormat.class);
-		String[] functions = job.getConfiguration().getStrings(SarahMetricNames.sarahFunctions.name);
 		
 		FileOutputFormat.setOutputPath(job, new Path(baseDir+".sarah/artifacts/balanced-reducers"));
 		job.setInputFormatClass(SequenceFileInputFormat.class); 
-		for (String function : functions) {
+		for (String function : SarahMetrics.sarahFunctions.getValue()) {
 			FileInputFormat.addInputPath(job, new Path(baseDir+".sarah/functions/"+function));
-			String functionOutputKeyClass = job.getConfiguration().get(SarahMetricNames.stringForF(SarahMetricNames.sarahOutputKeyForF.name, function));
+			String functionOutputKeyClass = SarahMetrics.get().sarahOutputKeyForF.getValue(function);
 			// sequence file for TotalOrderPartitioner for the function
 			MultipleOutputs.addNamedOutput(job, function,
 					SequenceFileOutputFormat.class, 

@@ -1,4 +1,4 @@
-package sarah.mapreduce.util;
+package sarah.metrics;
 
 import java.io.DataInput;
 import java.io.DataOutput;

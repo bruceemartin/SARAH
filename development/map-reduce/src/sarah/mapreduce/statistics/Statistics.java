@@ -1,7 +1,5 @@
 package sarah.mapreduce.statistics;
 
-import java.io.IOException;
-
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -17,11 +15,11 @@ import org.apache.hadoop.mapreduce.lib.reduce.LongSumReducer;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import sarah.mapreduce.util.FunctionKey;
-import sarah.mapreduce.util.SarahMapReduceMetrics;
-import sarah.mapreduce.util.SarahMetricNames;
-import sarah.mapreduce.util.SarahMetrics;
-import sarah.mapreduce.util.StatsForFunctionAndKey;
+import sarah.mapreduce.metrics.FunctionKey;
+import sarah.mapreduce.metrics.MapReduceMetricService;
+import sarah.metrics.SarahMetrics;
+import sarah.metrics.SarahMetricService;
+import sarah.metrics.StatsForFunctionAndKey;
 
 
 /*
@@ -38,18 +36,17 @@ import sarah.mapreduce.util.StatsForFunctionAndKey;
  */
 
 public class Statistics extends Configured implements Tool {
-
+	private SarahMetricService sarahMetricService;
 	@Override
 	public int run(String[] args) throws Exception {
 		if (args.length != 1) {
-			System.out
-					.printf("Usage: sarah [-libjars <jars>] [-conf <conf>] statistics <dataset>\n");
+			System.out.printf("Usage: sarah [-libjars <jars>] [-conf <conf>] statistics <dataset>\n");
 			return -1;
 		}
 
 		Job job = Job.getInstance(getConf());
 		String sarahPathName = args[0]+".sarah";
-		SarahMetrics sarahMetrics = new SarahMapReduceMetrics(job,sarahPathName);
+		sarahMetricService = new MapReduceMetricService(job,sarahPathName);
 		job.setJarByClass(Statistics.class);
 		job.setJobName("sarah statistics");
 		
@@ -61,29 +58,21 @@ public class Statistics extends Configured implements Tool {
 		job.setCombinerClass(LongSumReducer.class);
 		
 		buildMultipleOutputs(job);
-		String[] functions = sarahMetrics.getFunctions();
 		
-		job.setNumReduceTasks(functions.length);
+		job.setNumReduceTasks(SarahMetrics.sarahFunctions.getValue().length);
 		job.setPartitionerClass(MultiFunctionPartitioner.class);
 		job.setMapperClass(MultiFunctionMapper.class);
 		job.setCombinerClass(LongSumReducer.class);		
 		job.setReducerClass(MultiFunctionReducer.class);
 
 		boolean success = job.waitForCompletion(true);
-		computeActualSample(job,sarahMetrics);		
-		sarahMetrics.save();
-		sarahMetrics.print(System.out);
+		sarahMetricService.save();
+		sarahMetricService.print(System.out);
 
 		return success ? 0 : 1;
 	}
 
-	private void computeActualSample(Job job, SarahMetrics sarahMetrics) throws IOException {
-		// Compute the actual sample size
-		long numberSampleRecords = sarahMetrics.getLongValue(SarahMetricNames.numberSampleRecords);
-		long numberInputRecords = sarahMetrics.getLongValue(SarahMetricNames.numberInputRecords);
-		String sampleAsString = String.valueOf((double)numberSampleRecords/(double)numberInputRecords);
-		job.getConfiguration().set(SarahMetricNames.sarahSampleFraction.name,sampleAsString);
-	}
+
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private void buildMultipleOutputs(Job job) throws ClassNotFoundException {
@@ -91,12 +80,11 @@ public class Statistics extends Configured implements Tool {
 		LazyOutputFormat.setOutputFormatClass(job, TextOutputFormat.class);
 		
 		// Need to handle missing properties gracefully.
-		String sampleOutputFormat = job.getConfiguration().get(SarahMetricNames.sarahSampleOutputFormat.name);
-		String sampleOutputKeyClass= job.getConfiguration().get(SarahMetricNames.sarahSampleOutputKeyClass.name);
-		String sampleOutputValueClass = job.getConfiguration().get(SarahMetricNames.sarahSampleOutputValueClass.name);
-		String[] functions = job.getConfiguration().getStrings(SarahMetricNames.sarahFunctions.name);
+		String sampleOutputFormat = job.getConfiguration().get(SarahMetrics.get().sarahSampleOutputFormat.name);
+		String sampleOutputKeyClass= job.getConfiguration().get(SarahMetrics.get().sarahSampleOutputKeyClass.name);
+		String sampleOutputValueClass = job.getConfiguration().get(SarahMetrics.get().sarahSampleOutputValueClass.name);
 		
-		for (String function : functions) {
+		for (String function : SarahMetrics.sarahFunctions.getValue()) {
 			MultipleOutputs.addNamedOutput(job, function,
 					(Class<? extends OutputFormat>) SequenceFileOutputFormat.class, 
 					FunctionKey.class,

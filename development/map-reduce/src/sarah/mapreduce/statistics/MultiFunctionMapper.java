@@ -30,9 +30,9 @@ import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.hadoop.security.Credentials;
 
-import sarah.mapreduce.util.FunctionKey;
-import sarah.mapreduce.util.SarahMapReduceMetrics;
-import sarah.mapreduce.util.SarahMetricNames;
+import sarah.mapreduce.metrics.FunctionKey;
+import sarah.mapreduce.metrics.MapReduceMetricService;
+import sarah.metrics.SarahMetrics;
 
 
 @SuppressWarnings("rawtypes")
@@ -40,7 +40,6 @@ public class MultiFunctionMapper<KEYIN, VALUEIN> extends
 		Mapper<KEYIN, VALUEIN, WritableComparable, LongWritable> {
 	
 	private MultipleOutputs<KEYIN,VALUEIN> multipleOutputs;
-	private SarahMapReduceMetrics sarahMetrics=null;
 
 	public Context getMapContext(
 			MapContext<KEYIN, VALUEIN, WritableComparable, LongWritable> mapContext) {
@@ -356,7 +355,6 @@ public class MultiFunctionMapper<KEYIN, VALUEIN> extends
 
 	}
 	
-	private float targetSampleSize = .05F;
 	private Random generator;
 	private boolean nullSampleOutputKey = false;
 	private String functions[];
@@ -367,33 +365,28 @@ public class MultiFunctionMapper<KEYIN, VALUEIN> extends
 	protected void setup(
 			org.apache.hadoop.mapreduce.Mapper<KEYIN, VALUEIN, WritableComparable, LongWritable>.Context context)
 			throws IOException, InterruptedException {
-		sarahMetrics = new SarahMapReduceMetrics(context);
-		// Get the target sample size from the configuration.  If not set defaults to 
-		String sampleSizeString = sarahMetrics.getStringValue(SarahMetricNames.sarahTargetSampleFraction);
-		if (sampleSizeString!=null) {
-			targetSampleSize = Float.parseFloat(sampleSizeString);
-		}
-		nullSampleOutputKey = (sarahMetrics.getStringValue(SarahMetricNames.sarahSampleOutputKeyClass).equals("org.apache.hadoop.io.NullWritable"));
+		new MapReduceMetricService(context);
+		nullSampleOutputKey = SarahMetrics.get().sarahSampleOutputKeyClass.getValue().equals("org.apache.hadoop.io.NullWritable");
 		// If a seed is set, then use it, otherwise let Java Random class assign it.
-		String seedString = sarahMetrics.getStringValue(SarahMetricNames.sarahSampleSeed);
+		Long seedString = SarahMetrics.get().sarahSampleSeed.getValue();
 		multipleOutputs = new MultipleOutputs<KEYIN, VALUEIN>((TaskInputOutputContext<?, ?, KEYIN, VALUEIN>) context);
 		if (seedString == null) {
 			generator = new Random();
 			
 		} else {
 			try {
-				generator = new Random(Long.parseLong(seedString));
+				generator = new Random(seedString);
 			} catch (NumberFormatException e) {
 				generator = new Random(); 
 			}
 		}
 				
 	    Class<? extends Mapper<KEYIN, VALUEIN, WritableComparable, Writable>> mapperClass;
-	    functions = sarahMetrics.getFunctions();
+	    functions = SarahMetrics.sarahFunctions.getValue();
 	    userMappers = new Mapper[functions.length];
 		int i = 0;
 		for (String function : functions) {
-			String className = sarahMetrics.getStringValue(SarahMetricNames.stringForF(SarahMetricNames.sarahFunctionClass.name, function));
+			String className = SarahMetrics.get().sarahFunctionClass.getValue(function);
 			try {
 				mapperClass = (Class<? extends Mapper<KEYIN, VALUEIN, WritableComparable, Writable>>) Class.forName(className);
 				userMappers[i++] = mapperClass.newInstance();
@@ -413,9 +406,9 @@ public class MultiFunctionMapper<KEYIN, VALUEIN> extends
 		MultiFunctionMapper<KEYIN, VALUEIN>.Context mfmc = getMapContext(context);
 		
 		while (context.nextKeyValue()) {
-			sarahMetrics.increment(SarahMetricNames.numberInputRecords,1);
-			if (generator.nextDouble() < targetSampleSize) {
-				sarahMetrics.increment(SarahMetricNames.numberSampleRecords,1);
+			SarahMetrics.get().numberInputRecords.increment(1);
+			if (generator.nextDouble() < SarahMetrics.get().sarahTargetSampleFraction.getValue()) {
+				SarahMetrics.get().numberSampleRecords.increment(1);
 				writeSample(context.getCurrentKey(),context.getCurrentValue());
 				int i=0;
 				for (String function : functions) {

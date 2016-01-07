@@ -8,10 +8,10 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 
-import sarah.mapreduce.util.FunctionKey;
-import sarah.mapreduce.util.SarahMapReduceMetrics;
-import sarah.mapreduce.util.SarahMetricNames;
-import sarah.mapreduce.util.StatsForFunctionAndKey;
+import sarah.mapreduce.metrics.FunctionKey;
+import sarah.mapreduce.metrics.MapReduceMetricService;
+import sarah.metrics.SarahMetrics;
+import sarah.metrics.StatsForFunctionAndKey;
 
 
 /* This reducer generates statistics on samples of intermediate data sets that can be
@@ -20,7 +20,6 @@ import sarah.mapreduce.util.StatsForFunctionAndKey;
 
 public class MultiFunctionReducer<KEY> extends Reducer<FunctionKey, LongWritable,KEY,StatsForFunctionAndKey>  {	
 	private MultipleOutputs<KEY, StatsForFunctionAndKey> multipleOutputs;
-	private SarahMapReduceMetrics sarahMetrics=null;
 	private DescriptiveStatistics statsForFunction;
 	private DescriptiveStatistics statsForFunctionAndKey;
 	
@@ -56,8 +55,7 @@ public class MultiFunctionReducer<KEY> extends Reducer<FunctionKey, LongWritable
 	// checkNextFunctionKey detects when a new key is being processed and records per key statistics  
 	private void checkNextFunctionKey(FunctionKey key) throws IOException, InterruptedException {
 		if (prevKey.isSet() && prevKey.differentKey(key)) {
-			sarahMetrics.increment(SarahMetricNames.numberOutputKeysForF,prevKey.getFunctionName(), 1L);
-						
+			SarahMetrics.get().numberOutputKeysForF.increment(prevKey.getFunctionName(),1L);	
 			multipleOutputs.write(prevKey.getFunctionName(), prevKey, new StatsForFunctionAndKey(statsForFunctionAndKey),
 					"functions/" + prevKey.getFunctionName() + "/part");
 			statsForFunctionAndKey.clear();
@@ -67,16 +65,16 @@ public class MultiFunctionReducer<KEY> extends Reducer<FunctionKey, LongWritable
 	
 	// cleanup reports function statistics.  All of the records produced by the function have been processed.
 	// because there is 1 reducer per function.
-	@Override
+
     protected void cleanup(Context context) throws IOException, InterruptedException {
-		sarahMetrics.setLongValue(SarahMetricNames.numberOutputRecordsForF, prevKey.getFunctionName(),statsForFunction.getN());
-		sarahMetrics.setLongValue(SarahMetricNames.minSizeRecordForF, prevKey.getFunctionName(), (long)statsForFunction.getMin());
-		sarahMetrics.setLongValue(SarahMetricNames.maxSizeRecordForF, prevKey.getFunctionName(), (long)statsForFunction.getMax());
-		sarahMetrics.setLongValue(SarahMetricNames.totalSizeRecordsForF, prevKey.getFunctionName(),(long)statsForFunction.getSum());
-		sarahMetrics.setDoubleValue(SarahMetricNames.meanSizeRecordForF, prevKey.getFunctionName(), statsForFunction.getMean());
-		sarahMetrics.setDoubleValue(SarahMetricNames.percentile25ForF, prevKey.getFunctionName(), statsForFunction.getPercentile(25));
-		sarahMetrics.setDoubleValue(SarahMetricNames.percentile50ForF, prevKey.getFunctionName(), statsForFunction.getPercentile(50));
-		sarahMetrics.setDoubleValue(SarahMetricNames.percentile75ForF, prevKey.getFunctionName(), statsForFunction.getPercentile(75));
+		SarahMetrics.get().numberOutputRecordsForF.setValue(prevKey.getFunctionName(),statsForFunction.getN());
+		SarahMetrics.get().minSizeRecordForF.setValue(prevKey.getFunctionName(), (long)statsForFunction.getMin());
+		SarahMetrics.get().maxSizeRecordForF.setValue(prevKey.getFunctionName(), (long)statsForFunction.getMax());
+		SarahMetrics.get().totalSizeRecordsForF.setValue(prevKey.getFunctionName(),(long)statsForFunction.getSum());
+		SarahMetrics.get().meanSizeRecordForF.setValue(prevKey.getFunctionName(), statsForFunction.getMean());
+		SarahMetrics.get().percentile25ForF.setValue(prevKey.getFunctionName(), statsForFunction.getPercentile(25));
+		SarahMetrics.get().percentile50ForF.setValue(prevKey.getFunctionName(), statsForFunction.getPercentile(50));
+		SarahMetrics.get().percentile75ForF.setValue(prevKey.getFunctionName(), statsForFunction.getPercentile(75));
         multipleOutputs.close();
     }
 
@@ -85,7 +83,7 @@ public class MultiFunctionReducer<KEY> extends Reducer<FunctionKey, LongWritable
 			throws IOException, InterruptedException {
 		// Reducer has two outputs -- the sample and the distribution/statistics.
 		multipleOutputs = new MultipleOutputs<KEY, StatsForFunctionAndKey>(context);
-		sarahMetrics = new SarahMapReduceMetrics(context);
+		new MapReduceMetricService(context);
 		statsForFunction = new DescriptiveStatistics();
 		statsForFunctionAndKey = new DescriptiveStatistics();
 		super.setup(context);

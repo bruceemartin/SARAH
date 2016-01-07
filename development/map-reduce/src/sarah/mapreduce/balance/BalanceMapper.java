@@ -9,10 +9,9 @@ import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 
-import sarah.mapreduce.util.FunctionKey;
-import sarah.mapreduce.util.SarahMapReduceMetrics;
-import sarah.mapreduce.util.SarahMetricNames;
-import sarah.mapreduce.util.StatsForFunctionAndKey;
+import sarah.mapreduce.metrics.FunctionKey;
+import sarah.metrics.SarahMetrics;
+import sarah.metrics.StatsForFunctionAndKey;
 
 
 
@@ -40,8 +39,6 @@ public class BalanceMapper<KEY> extends Mapper<FunctionKey, StatsForFunctionAndK
 		
 	private NullWritable nullValue = NullWritable.get();
 	private boolean foundPartition = false;
-	
-	private SarahMapReduceMetrics sarahMetrics=null;
 	
 	// There are three possible states.
 	// first: prevKey is not set, key is the first key
@@ -94,7 +91,7 @@ public class BalanceMapper<KEY> extends Mapper<FunctionKey, StatsForFunctionAndK
 	}
 
 	private void writePartition(long partitionSize) throws IOException, InterruptedException {
-		sarahMetrics.increment(BalanceMetricNames.recommendedNumberReducersForF,functionName,1);
+		BalanceSarahMetrics.get().recommendedNumberReducersForF.increment(functionName,1);
 		multipleOutputs.write(functionName+"txt", partitionSize+" estimated records in partition.",nullValue,functionName+"-txt/interval");
 	}
 
@@ -107,10 +104,10 @@ public class BalanceMapper<KEY> extends Mapper<FunctionKey, StatsForFunctionAndK
 	protected void setup(Context context)
 			throws IOException, InterruptedException {
 		// Get the sample size from the configuration
-		sampleSize = context.getConfiguration().getFloat(SarahMetricNames.sarahSampleFraction.name, 0);
+		sampleSize = context.getConfiguration().getFloat(SarahMetrics.get().sarahSampleFraction.name, 0);
 		
 		preferredPartitionSize = context.getConfiguration().getInt("sarah.partition.preferredSize", 10000000);
-		sarahMetrics = new SarahMapReduceMetrics(context);
+		new BalanceMetricService(context);
 		multipleOutputs = new MultipleOutputs<KEY, NullWritable>(context);
 		super.setup(context);
 	}

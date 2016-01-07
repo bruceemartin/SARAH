@@ -1,28 +1,45 @@
-package sarah.mapreduce.util;
+package sarah.metrics;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 
 /*
- * SarahMetrics represent something that is observed about a data set.
+ * A SarahMetric represents something that is observed about a data set.
  * SarahMetrics have a name and a description.
- * SarahMetrics can be longs, doubles or strings.
- * SarahMetrics can be represented as counters, properties or values in files.
+ * SarahMetrics can represent a set of metrics, one per function.
  */
 
-public class SarahMetric {
+public class SarahMetric<TYPE> {
+	private TYPE value;
 	public String name;
 	public String description;
-	public enum Destination {File,Property,Counter};
-	public enum Type {Long,Double,String};
-	public Type type;
-	public Destination destination;
-	public static ArrayList<SarahMetric> counters = new ArrayList<SarahMetric>();
+	private boolean parameterizedByFunction = false;
 	
-	public SarahMetric(String theName, String theDescription, Type theType, Destination theDestination) {
+	private HashMap<String,TYPE> functionMetrics = new HashMap<String,TYPE>();
+	static HashMap<String,SarahMetric<?>> metrics = new HashMap<String,SarahMetric<?>>();
+	
+	public SarahMetric(String theName, String theDescription) {
 		name = theName;
 		description = theDescription;
-		destination = theDestination;
-		type = theType;
-		if (destination == Destination.Counter) counters.add(this);
+		parameterizedByFunction = theName.contains("%func");
+		metrics.put(name, this);
 	}
+	
+	public boolean parameterizedByFunction() {
+		return parameterizedByFunction;
+	}
+	
+	public void setValue(TYPE theValue) {
+		value = theValue;
+	}
+	public void setValue(String functionName, TYPE theValue) {
+		functionMetrics.put(functionName, theValue);
+	}
+	public TYPE getValue() {
+		return value;
+	}
+	public TYPE getValue(String functionName) {
+		return functionMetrics.get(functionName);
+	}
+
+
 }
