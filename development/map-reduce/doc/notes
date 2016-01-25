@@ -54,21 +54,21 @@ Statistics:
 	   	 functionKey is -- sarah.<function>.output.key.class -- do we need output?
 	   DONE: output value type is LongWritable -- we are counting keys.
 	
-	   FIXED BUG:  Function output records are being double counted for total number of records after 
-		applying function or records associated with key are being half counted.  
-		Statistics produce this:
-			sarah.sample.EveningFilter.number.keys=12
-			sarah.sample.EveningFilter.number.records=30050
-			sarah.sample.IPFromLog.number.keys=20374
-			sarah.sample.IPFromLog.number.records=90910
-		BUT when adding up all of the counts for all of the keys in the functions files,
-		the sum of the counts are exactly 1/2 of the above number of records.
+	   DONE BUG:  Function output records are being double counted for total number of records after 
+			applying function or records associated with key are being half counted.  
+			Statistics produce this:
+				sarah.sample.EveningFilter.number.keys=12
+				sarah.sample.EveningFilter.number.records=30050
+				sarah.sample.IPFromLog.number.keys=20374
+				sarah.sample.IPFromLog.number.records=90910
+			BUT when adding up all of the counts for all of the keys in the functions files,
+			the sum of the counts are exactly 1/2 of the above number of records.
 
 	DONE: Seed should be included in statistics. 
 	DONE: Generate output statistics in client output, not just counters.
 	DONE: Statistics.xml file should have same order as client output.
 	DONE: Make Metrics an object so that it can be extended.
-		Invisioned extensions -- save generated statistics somewhere else
+			Invisioned extensions -- save generated statistics somewhere else
 				      -- different kinds of properties -- not just current ones
 				      -- calculating statistics in some way other than hadoop counters
 			                 e.g. can this class be reused in Sarah for Spark?
@@ -90,18 +90,8 @@ Statistics:
 		sarah.sample.target.factor?  sarah.sample.factor?  Look at APIs that generate samples for
 		appropriate term.
 
-	TODO: Add properties for program and version and date/time that generated statistics -- easy
-
-	TODO: input statistics -- use identity mapper?
-		number of records  -- done
-		distribution of keys -- treat it like a function -- identity mapper
-		record size -- min, max, distribution -- do this for a function on the sample
-		estimated statistics based on sample statistics -- can be done at client -- properties:
-		
-	TODO:  when saving/printing sample statistics -- generate estimated version -- do the multiplication!
+	DONE: Add properties for program and version and date/time that generated statistics -- easy
 	
-	TODO:  StatsForFunctionAndKey make it into reducer's output file, but are not named as in the SarahMetricNames class	
-
 	DONE: Compute record sizes 
 		done	Turn record to bytes in MultiFunctionMapper as in FunctionKey 
 		done	Make FunctionKey have extra record size 
@@ -117,9 +107,26 @@ Statistics:
 				sarah.sample.%func.quantile25.size.record
 				sarah.sample.%func.quantile50.size.record
 				sarah.sample.%func.quantile75.size.record
-			
+		  
+	DONE: make all statistics be reported via SarahMetrics
+	      for SarahMapReduceMetrics support property,counter and file output
+	      MultipleOutputs found in MultiFunctionMapper,MultiFunctionReducer and Statistics
+	      
+	      
+	      				
+				
+	TODO: input statistics -- use identity mapper?
+		number of records  -- done
+		distribution of keys -- treat it like a function -- identity mapper
+		record size -- min, max, distribution -- do this for a function on the sample
+		estimated statistics based on sample statistics -- can be done at client -- properties:
+		
+	TODO:  when saving/printing sample statistics -- generate estimated version -- do the multiplication!
+	
+	TODO:  StatsForFunctionAndKey make it into reducer's output file, 
+	       but are not named as in the SarahMetricNames class	
 
-		Update reducer to generate statistics per function.key as values in output file
+	TODO:  Update reducer to generate statistics per function.key as values in output file
 			Besides number of records associated with the key, it is
 			interesting to know statistics about the records associated with the key.
 
@@ -130,7 +137,6 @@ Statistics:
 				per key a sorted array of record sizes
 				First sorted by key.size with comparator -- generate %
 				Sort globally to generate global %
-
 		
 			done mapper outputs (function,key,recsize), 1
 			done partitioner -- by function -- one reducer per function
@@ -145,15 +151,7 @@ Statistics:
 
 			     setup: initializeFunc(), initializeFuncRecKey()
 
-	TODO: SarahMetrics needs to distinguish different types of metrics
-		  Currently doubles are not being divided by factor
-		  Basically need to eliminate idea of turning all sarah group counters into properties.
-		  Instead, need to use type and destination.
-		  
-	TODO: make all statistics be reported via SarahMetrics
-	      for SarahMapReduceMetrics support property,counter and file output
-	      MultipleOutputs found in MultiFunctionMapper,MultiFunctionReducer and Statistics
-	
+	TODO: SarahMetrics doubles are not being divided by factor
 
 	TODO: man page for statistics
 	TODO: javadoc for statistics.
@@ -166,6 +164,12 @@ Statistics:
 	????: output seed, even if not given -- needed for incremental update. Not really random since
 		all mappers have same pseudo random number sequence.  Probably best solution is to always
 		let Java assign the key.
+
+
+    FIXED: MapReduce counter names have a limit of 64 characters.  This is causing troubles in using them
+          for metrics.  Need to see if that can be bumped up, worked around or somehow dealt with.  For some odd
+          reason this is only a problem when running in a cluster.  It does not show up when running in Eclipse.
+		  Now uses symbols for counter names.
 
 
 Balance:
@@ -185,6 +189,8 @@ Balance:
 	FIXED BUG:  Last bucket not handled correctly -- looks like number of reducers needs to be +1, 
                  but edge case of last key needs to be handled.
 	TODO??: Need to overwrite functions and preferred number of records -- add comment in text file
+	
+	TODO:  BalanceMetricService needs to overwrite save() and print() to produce correct output
 
 	DONE: ouput file format is SequenceFile -- that's what the TotalOrderPartitioner wants
 	        output key is sarah.<function>.output.key.class -- we do need this so that multifile
@@ -211,7 +217,7 @@ Balance:
 	TODO: Get results into balance tool report
 
 Visualize:
-	TODO: Implement tool that generates R graphics from statistics, balance	   
+	TODO: Implement tool that generates R or zeplin? graphics from statistics, balance	   
 
 Tests:
 	TODO: update tests for weblog
@@ -288,4 +294,39 @@ Refactoring TODO
 		Extended metrics should be added to the extendedMetrics group.
 		The additional metrics will be saved, printed and read by the base classes.
 	Subclasses can define how metrics are shared between processes
+	
+	
+	
+	
+	
+Inputs / Outputs per tool
+
+Statistics
+    Input -- 
+    	properties set in configuration
+    Output -- 												
+    	properties set in configuration, 			statistics.xml, console
+    	tool properties, 
+    	input data set metrics
+    	sample metrics
+    	per function metrics
+    	
+    	random sample								./samples/random
+    	
+    	results of applying each function			./functions/<function>
+    	
+Balance
+	Input
+		properties set in configuration
+		statistics.xml
+		./functions/<function>
+		
+	Output
+		properties									console, ./artifacts/balanced-reducers/<function>/balanced.xml
+		number of reducers property					
+		where to find sequence files				
+
+		interval sequence file per function?		./artifacts/balanced-reducers/<function>/interval-m-*
+		text version of sequence file per function	./artifacts/balanced-reducers/<function>-txt/interval-m-*
+		
 	

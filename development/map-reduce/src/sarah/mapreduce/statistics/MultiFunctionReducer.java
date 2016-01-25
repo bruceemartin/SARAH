@@ -9,6 +9,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 
 import sarah.mapreduce.metrics.FunctionKey;
+import sarah.mapreduce.metrics.MapReduceCounters;
 import sarah.mapreduce.metrics.MapReduceMetricService;
 import sarah.metrics.SarahMetrics;
 import sarah.metrics.StatsForFunctionAndKey;
@@ -76,6 +77,7 @@ public class MultiFunctionReducer<KEY> extends Reducer<FunctionKey, LongWritable
 		SarahMetrics.get().percentile50ForF.setValue(prevKey.getFunctionName(), statsForFunction.getPercentile(50));
 		SarahMetrics.get().percentile75ForF.setValue(prevKey.getFunctionName(), statsForFunction.getPercentile(75));
         multipleOutputs.close();
+        MapReduceCounters.addSarahMetricsToCounters();
     }
 
 	@Override

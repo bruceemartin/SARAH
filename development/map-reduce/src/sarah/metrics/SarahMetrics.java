@@ -9,6 +9,11 @@ public class SarahMetrics {
 	
 	public static SarahMetric<String[]> sarahFunctions = new SarahMetric<String[]>("sarah.functions","The functions applied to the generated sample.");  
 	
+	public SarahMetric<String> sarahToolName = new SarahMetric<String>("sarah.tool.name","The name of the tool that generated these statitistics");
+	public SarahMetric<String> sarahToolVersion = new SarahMetric<String>("sarah.tool.version","The version of the tool that generated these statitistics");
+	public SarahMetric<String> sarahDateOfGeneration = new SarahMetric<String>("sarah.date.generated","Date and time of statistic generation");
+	public SarahMetric<?>[] toolMetrics = {sarahToolName,sarahToolVersion,sarahDateOfGeneration};
+	
 	public SarahMetric<String> sarahFunctionClass = new SarahMetric<String>("sarah.%func.class","The class that implements the %func function.");
 	public SarahMetric<String> sarahOutputKeyForF = new SarahMetric<String>("sarah.%func.output.key.class","The class that implements the key output by the %func function.");
 	public SarahMetric<?>[] functionMetrics = {sarahFunctionClass,sarahOutputKeyForF};
@@ -86,7 +91,7 @@ public class SarahMetrics {
 		return pattern.replace("%func", functionName);
 	}
 	
-	private static SarahMetrics singleton;
+	
 	
 	
 	
@@ -96,6 +101,7 @@ public class SarahMetrics {
 	}
 	
 
+	private static SarahMetrics singleton;
 	
 	public static SarahMetrics get() {
 		return singleton;
@@ -103,20 +109,6 @@ public class SarahMetrics {
 
 
 
-	public void setLong(String name, long theValue) {
-		SarahMetric<Long> metric = (SarahMetric<Long>) SarahMetric.metrics.get(name);
-		metric.setValue(theValue);
-		
-	}
-
-
-
-	public void setLong(String functionName,
-			String pattern, long value) {
-		SarahMetric<Long> metric = (SarahMetric<Long>) SarahMetric.metrics.get(pattern);
-		metric.setValue(functionName, value);
-		
-	}
 
 	
 }

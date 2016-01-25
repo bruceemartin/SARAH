@@ -31,7 +31,9 @@ import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 import org.apache.hadoop.security.Credentials;
 
 import sarah.mapreduce.metrics.FunctionKey;
+import sarah.mapreduce.metrics.MapReduceCounters;
 import sarah.mapreduce.metrics.MapReduceMetricService;
+import sarah.metrics.SarahMetric;
 import sarah.metrics.SarahMetrics;
 
 
@@ -366,7 +368,10 @@ public class MultiFunctionMapper<KEYIN, VALUEIN> extends
 			org.apache.hadoop.mapreduce.Mapper<KEYIN, VALUEIN, WritableComparable, LongWritable>.Context context)
 			throws IOException, InterruptedException {
 		new MapReduceMetricService(context);
-		nullSampleOutputKey = SarahMetrics.get().sarahSampleOutputKeyClass.getValue().equals("org.apache.hadoop.io.NullWritable");
+		SarahMetrics smetrics = SarahMetrics.get();
+		SarahMetric<String> keyclass = smetrics.sarahSampleOutputKeyClass;
+		String sampleOutputClass = keyclass.getValue();
+		nullSampleOutputKey = sampleOutputClass.equals("org.apache.hadoop.io.NullWritable");
 		// If a seed is set, then use it, otherwise let Java Random class assign it.
 		Long seedString = SarahMetrics.get().sarahSampleSeed.getValue();
 		multipleOutputs = new MultipleOutputs<KEYIN, VALUEIN>((TaskInputOutputContext<?, ?, KEYIN, VALUEIN>) context);
@@ -442,6 +447,7 @@ public class MultiFunctionMapper<KEYIN, VALUEIN> extends
 			throws IOException, InterruptedException {
 		multipleOutputs.close();
 		super.cleanup(context);
+		MapReduceCounters.addSarahMetricsToCounters();
 	}
 	
 

@@ -2,6 +2,8 @@ package sarah.metrics;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Calendar;
+
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -9,33 +11,39 @@ import org.apache.hadoop.fs.Path;
 public abstract class SarahMetricServiceBase implements SarahMetricService {
 	protected static String sarahStatisticsName = "statistics.xml";
 	protected String sarahPathName;
-	protected String sarahTitle = "Sarah Statistics";
+	public static String sarahTitle = "Sarah Statistics";
 	protected FileSystem fs;
+	private String dotOfGeneration;
+	
 
 
 	public SarahMetricServiceBase(FileSystem fileSystem) {
 		fs = fileSystem;
+		dotOfGeneration = Calendar.getInstance().getTime().toString();
 	}
 
 	@Override
 	public void save() throws IOException {
+		SarahMetrics.get().sarahToolName.setValue(getToolName());
+		SarahMetrics.get().sarahToolVersion.setValue(getToolVersion());
+		SarahMetrics.get().sarahDateOfGeneration.setValue(dotOfGeneration);
 		Path p = new Path(sarahPathName, sarahStatisticsName);
 		FSDataOutputStream out = fs.create(p);
 		out.writeBytes(asXML());
 		out.close();
 	}
 
-	@Override
-	public void print(PrintStream out) throws IOException {
+
+	protected void printTool(PrintStream out) throws IOException {
+		SarahMetrics.get().sarahToolName.setValue(getToolName());
+		SarahMetrics.get().sarahToolVersion.setValue(getToolVersion());
+		SarahMetrics.get().sarahDateOfGeneration.setValue(dotOfGeneration);
 		out.println("\n#"+sarahTitle);
-		printMetrics(out,"Input Data Set",SarahMetrics.get().inputDataSetMetrics);
-		printMetrics(out,"Generated Sample",SarahMetrics.get().sampleMetrics);
-		printFunctionMetrics(out,"Functions",SarahMetrics.get().functionMetrics,true);
-		printFunctionMetrics(out,"Functions Applied to Sample",SarahMetrics.get().sampleFunctionMetrics,false);	
-	}	
+		
+	}
 	
 
-
+	abstract protected String asXML() throws IOException;
 
 	
 	private void metricAsXML(StringBuilder result,SarahMetric<?> metric) {
@@ -45,16 +53,8 @@ public abstract class SarahMetricServiceBase implements SarahMetricService {
 		result.append(metric.getValue()+"</value>\n    </property>\n");
 	}
 	
-	protected String asXML() throws IOException {
-		StringBuilder result = new StringBuilder("<configuration>\n");
-		metricsAsXML(result,"Input Data Set",SarahMetrics.get().inputDataSetMetrics);
-		metricsAsXML(result,"Generated Sample",SarahMetrics.get().sampleMetrics);
-		functionMetricsAsXML(result,"Functions",SarahMetrics.get().functionMetrics,true);
-		functionMetricsAsXML(result,"Functions Applied to Sample",SarahMetrics.get().sampleFunctionMetrics,false);	
-		result = result.append("</configuration>\n");
-		return result.toString();
-	}
 	
+	@SuppressWarnings("unchecked")
 	private SarahMetric<Object>[] functionMetricsForF(String function, SarahMetric<?>[] metrics) {
 		SarahMetric<Object>[] metricsForF = new SarahMetric[metrics.length];
 		short i = 0;
@@ -67,7 +67,7 @@ public abstract class SarahMetricServiceBase implements SarahMetricService {
 		return metricsForF;
 	}
 
-	private void functionMetricsAsXML(StringBuilder result, String title, SarahMetric<?>[] functionMetrics, boolean addSarahFunctionsMetric) {
+	protected void functionMetricsAsXML(StringBuilder result, String title, SarahMetric<?>[] functionMetrics, boolean addSarahFunctionsMetric) {
 		result.append("\n    <!-- "+title+" -->\n");
 		if (addSarahFunctionsMetric) {
 			SarahMetric<String[]> metric = SarahMetrics.sarahFunctions;
@@ -81,7 +81,7 @@ public abstract class SarahMetricServiceBase implements SarahMetricService {
 		}		
 	}
 
-	private void metricsAsXML(StringBuilder result, String title, SarahMetric<?>[] metrics) {
+	protected void metricsAsXML(StringBuilder result, String title, SarahMetric<?>[] metrics) {
 		result.append("\n    <!-- "+title+" -->\n");
 		for (SarahMetric<?> metric: metrics) {
 			metricAsXML(result,metric);
@@ -92,14 +92,14 @@ public abstract class SarahMetricServiceBase implements SarahMetricService {
 		out.println(metric.name+"="+metric.getValue());
 	}
 	
-	private void printMetrics(PrintStream out, String title, SarahMetric<?>[] inputDataSetMetrics) {
+	protected void printMetrics(PrintStream out, String title, SarahMetric<?>[] inputDataSetMetrics) {
 		out.println("\n\n\n# "+title);
 		for (SarahMetric<?> metric: inputDataSetMetrics) {
 			printMetric(out,metric);
 		}
 	}
 
-	private void printFunctionMetrics(PrintStream out, String title, SarahMetric<?>[] functionMetrics, boolean addSarahFunctionsMetric) {
+	protected void printFunctionMetrics(PrintStream out, String title, SarahMetric<?>[] functionMetrics, boolean addSarahFunctionsMetric) {
 		out.println("\n\n# "+title);
 		if (addSarahFunctionsMetric) {
 			SarahMetric<String[]> metric = SarahMetrics.sarahFunctions;

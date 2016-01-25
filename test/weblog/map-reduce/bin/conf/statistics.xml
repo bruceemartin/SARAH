@@ -30,7 +30,7 @@
 
     <property>
     	<name>sarah.functions</name>
-    	<value>EveningFilter,IPFromLog</value>
+    	<value>IPFromLog,EveningFilter</value>
     </property>
 
     <property>

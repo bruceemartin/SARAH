@@ -10,6 +10,8 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 
 import sarah.mapreduce.metrics.FunctionKey;
+import sarah.mapreduce.metrics.MapReduceCounters;
+import sarah.metrics.CountedLongSarahMetric;
 import sarah.metrics.SarahMetrics;
 import sarah.metrics.StatsForFunctionAndKey;
 
@@ -91,7 +93,8 @@ public class BalanceMapper<KEY> extends Mapper<FunctionKey, StatsForFunctionAndK
 	}
 
 	private void writePartition(long partitionSize) throws IOException, InterruptedException {
-		BalanceSarahMetrics.get().recommendedNumberReducersForF.increment(functionName,1);
+		CountedLongSarahMetric recommendedReducers = BalanceSarahMetrics.get().recommendedNumberReducersForF;
+		recommendedReducers.increment(functionName,1L);
 		multipleOutputs.write(functionName+"txt", partitionSize+" estimated records in partition.",nullValue,functionName+"-txt/interval");
 	}
 
@@ -106,7 +109,7 @@ public class BalanceMapper<KEY> extends Mapper<FunctionKey, StatsForFunctionAndK
 		// Get the sample size from the configuration
 		sampleSize = context.getConfiguration().getFloat(SarahMetrics.get().sarahSampleFraction.name, 0);
 		
-		preferredPartitionSize = context.getConfiguration().getInt("sarah.partition.preferredSize", 10000000);
+		preferredPartitionSize = context.getConfiguration().getInt("sarah.partition.preferredSize", 100000);
 		new BalanceMetricService(context);
 		multipleOutputs = new MultipleOutputs<KEY, NullWritable>(context);
 		super.setup(context);
@@ -121,6 +124,7 @@ public class BalanceMapper<KEY> extends Mapper<FunctionKey, StatsForFunctionAndK
 		if (textFile!=null) textFile.close();
 		multipleOutputs.close();
 		super.cleanup(context);
+		MapReduceCounters.addSarahMetricsToCounters();
 	}
 
 

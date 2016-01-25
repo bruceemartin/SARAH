@@ -1,6 +1,7 @@
 package sarah.metrics;
 
 import java.util.HashMap;
+import java.util.Set;
 
 /*
  * A SarahMetric represents something that is observed about a data set.
@@ -15,7 +16,7 @@ public class SarahMetric<TYPE> {
 	private boolean parameterizedByFunction = false;
 	
 	private HashMap<String,TYPE> functionMetrics = new HashMap<String,TYPE>();
-	static HashMap<String,SarahMetric<?>> metrics = new HashMap<String,SarahMetric<?>>();
+	public static HashMap<String,SarahMetric<?>> metrics = new HashMap<String,SarahMetric<?>>();
 	
 	public SarahMetric(String theName, String theDescription) {
 		name = theName;
@@ -40,6 +41,9 @@ public class SarahMetric<TYPE> {
 	public TYPE getValue(String functionName) {
 		return functionMetrics.get(functionName);
 	}
-
+	public Set<String> functionNames() {
+		Set<String> result = functionMetrics.keySet();
+		return result;
+	}
 
 }

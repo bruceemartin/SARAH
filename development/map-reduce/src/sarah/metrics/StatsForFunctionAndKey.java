@@ -27,6 +27,10 @@ public class StatsForFunctionAndKey implements Writable {
 		quantile50ForKey = statsForFunctionAndKey.getPercentile(50);
 		quantile75ForKey = statsForFunctionAndKey.getPercentile(75);
 	}
+	
+	public StatsForFunctionAndKey() {
+		
+	}
 
 	@Override
 	public void readFields(DataInput in) throws IOException {
