@@ -23,6 +23,32 @@ import sarah.metrics.SarahMetrics;
 
 public class MapReduceMetricService extends SarahMetricServiceBase implements SarahMetricService  {
 	private Configuration conf = null;
+	private String sarahStatisticsName = "statistics.xml";
+	private Path statfile;
+	
+	// Constructor used by clients
+	public MapReduceMetricService(Job theJob, String pathName) throws IOException {
+		super(FileSystem.get(theJob.getConfiguration()));
+		MapReduceCounters.job = theJob;
+		conf = theJob.getConfiguration();
+		Path base = new Path(pathName);
+		statfile = new Path(base, sarahStatisticsName);
+		FileSystem fs = FileSystem.get(conf);
+		if (fs.exists(statfile)) {
+			conf.addResource(fs.open(statfile));
+		}
+		new MapReduceSarahMetrics(conf);
+	}
+	
+	// Constructor used by mappers and reducers
+	public MapReduceMetricService(TaskInputOutputContext<?, ?, ?, ?> ctx) throws IOException {
+		super(FileSystem.get(ctx.getConfiguration()));
+		MapReduceCounters.context = ctx;
+		conf = ctx.getConfiguration();
+		if (MapReduceSarahMetrics.get()==null) {
+			new MapReduceSarahMetrics(conf);
+		}
+	}
 	
 	@Override
 	public String getToolName() {
@@ -32,6 +58,28 @@ public class MapReduceMetricService extends SarahMetricServiceBase implements Sa
 	@Override
 	public String getToolVersion() {
 		return ".1";
+	}
+
+	@Override
+	public void print(PrintStream out) throws IOException {
+		super.printTool(out);
+		printMetrics(out,"Sarah Tool",SarahMetrics.get().toolMetrics);
+		printMetrics(out,"Input Data Set",SarahMetrics.get().inputDataSetMetrics);
+		printMetrics(out,"Generated Sample",SarahMetrics.get().sampleMetrics);
+		printFunctionMetrics(out,"Functions",SarahMetrics.get().functionMetrics,true);
+		printFunctionMetrics(out,"Functions Applied to Sample",SarahMetrics.get().sampleFunctionMetrics,false);	
+	}
+	
+	@Override
+	public void save() throws IOException {
+		// Add the computed values from the MapReduce counters to SarahMetrics
+		MapReduceCounters.addCountersToSarahMetrics();
+		// Compute the actual sample size prior to saving the metrics
+		long numberSampleRecords = SarahMetrics.get().numberSampleRecords.getValue();
+		long numberInputRecords = SarahMetrics.get().numberInputRecords.getValue();
+		double sample = ((double)numberSampleRecords/(double)numberInputRecords);
+		SarahMetrics.get().sarahSampleFraction.setValue(sample);
+		super.save();
 	}
 	
 	protected String asXML() throws IOException {
@@ -46,59 +94,8 @@ public class MapReduceMetricService extends SarahMetricServiceBase implements Sa
 	}
 	
 	@Override
-	public void print(PrintStream out) throws IOException {
-		super.printTool(out);
-		printMetrics(out,"Sarah Tool",SarahMetrics.get().toolMetrics);
-		printMetrics(out,"Input Data Set",SarahMetrics.get().inputDataSetMetrics);
-		printMetrics(out,"Generated Sample",SarahMetrics.get().sampleMetrics);
-		printFunctionMetrics(out,"Functions",SarahMetrics.get().functionMetrics,true);
-		printFunctionMetrics(out,"Functions Applied to Sample",SarahMetrics.get().sampleFunctionMetrics,false);	
-	}
-	
-	// Constructor used by clients
-	public MapReduceMetricService(Job theJob, String pathName) throws IOException {
-		super(FileSystem.get(theJob.getConfiguration()));
-		MapReduceCounters.job = theJob;
-		conf = theJob.getConfiguration();
-		sarahPathName = pathName;
-		Path base = new Path(sarahPathName);
-		Path statfile = new Path(base, MapReduceMetricService.sarahStatisticsName);
-		FileSystem fs = FileSystem.get(conf);
-		if (fs.exists(statfile)) {
-			conf.addResource(fs.open(statfile));
-		}
-		if (MapReduceSarahMetrics.get()==null) {
-			new MapReduceSarahMetrics(conf);
-		}
-	}
-	
-	
-
-	
-	// Constructor used by mappers and reducers
-	public MapReduceMetricService(TaskInputOutputContext<?, ?, ?, ?> ctx) throws IOException {
-		super(FileSystem.get(ctx.getConfiguration()));
-		MapReduceCounters.context = ctx;
-		conf = ctx.getConfiguration();
-		if (MapReduceSarahMetrics.get()==null) {
-			new MapReduceSarahMetrics(conf);
-		}
-	}
-	
-	
-
-
-	
-	@Override
-	public void save() throws IOException {
-		// Add the computed values from the MapReduce counters to SarahMetrics
-		MapReduceCounters.addCountersToSarahMetrics();
-		// Compute the actual sample size prior to saving the metrics
-		long numberSampleRecords = SarahMetrics.get().numberSampleRecords.getValue();
-		long numberInputRecords = SarahMetrics.get().numberInputRecords.getValue();
-		double sample = ((double)numberSampleRecords/(double)numberInputRecords);
-		SarahMetrics.get().sarahSampleFraction.setValue(sample);
-		super.save();
+	protected Path outputFilePath() {
+		return statfile;
 	}
 
 

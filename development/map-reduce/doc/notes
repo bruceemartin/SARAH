@@ -151,7 +151,7 @@ Statistics:
 
 			     setup: initializeFunc(), initializeFuncRecKey()
 
-	TODO: SarahMetrics doubles are not being divided by factor
+	DONE: SarahMetrics doubles are not being divided by factor
 
 	TODO: man page for statistics
 	TODO: javadoc for statistics.
@@ -190,7 +190,7 @@ Balance:
                  but edge case of last key needs to be handled.
 	TODO??: Need to overwrite functions and preferred number of records -- add comment in text file
 	
-	TODO:  BalanceMetricService needs to overwrite save() and print() to produce correct output
+	DONE:  BalanceMetricService needs to overwrite save() and print() to produce correct output
 
 	DONE: ouput file format is SequenceFile -- that's what the TotalOrderPartitioner wants
 	        output key is sarah.<function>.output.key.class -- we do need this so that multifile
@@ -207,14 +207,14 @@ Balance:
 	TODO: sarah.partition.preferredSize -- as parameter, rather than configuration?
 	TODO: sarah.%func.partion.preferredSize -- per function?
 	TODO: run balance for some functions, not all
-	TODO: make it "balance" everywhere instead of balance-reducers
+	DONE: make it "balance" everywhere instead of balance-reducers
 	TODO: update balance to offer option to use record sizes per key, per reducer
 
 	TODO: man page for balance
 	TODO: javadoc for balance
 	DONE: move balance properties to BalancePropertyNames.  
 		Use SarahMapReduceMetrics just like statistics does for balance results.
-	TODO: Get results into balance tool report
+	DONE: Get results into balance tool report
 
 Visualize:
 	TODO: Implement tool that generates R or zeplin? graphics from statistics, balance	   
@@ -226,16 +226,16 @@ Tests:
 
 	
 Spark:
-	TODO:  refactor common code into sarah.common package
+	DONE:  refactor common code into sarah.common package
 		   use it in Spark for SARAH.
 
 
 Refactoring TODO
 	TODO:	Make sure SarahMetric hierarchy has correct visibility and overrides
 	
-	TODO:	Implement CountedDoubleMapReduceMetric completely and correctly
+	DONE:	Implement CountedDoubleMapReduceMetric completely and correctly
 	
-	TODO:	Set metric values from counters (for client after job runs)
+	DONE:	Set metric values from counters (for client after job runs)
 			Still needs to implement setLong / setDouble in MapReduceBase
 			Need to understand how to have dynamically named properties too.
 	
@@ -243,13 +243,11 @@ Refactoring TODO
 	
 	DONE:   Put save functionality to files in base -- let different subclasses reuse or change
 			
-	TODO:	Make sure service and metrics are completely implemented.
-			
-	TODO:   Run and debug
+	DONE:	Make sure service and metrics are completely implemented.
 	
 	TODO:	Move MultiFileOutput from client/reducer into MapReduceMetricService
 	
-	TODO:   BalanceSarahMetrics needs BalanceSarahMetricService
+	DONE:   BalanceSarahMetrics needs BalanceSarahMetricService
 	
 		    Check defaults for setLong when obtained from configuration -- seed in particular and others
 	
@@ -299,34 +297,34 @@ Refactoring TODO
 	
 	
 	
-Inputs / Outputs per tool
-
-Statistics
-    Input -- 
-    	properties set in configuration
-    Output -- 												
-    	properties set in configuration, 			statistics.xml, console
-    	tool properties, 
-    	input data set metrics
-    	sample metrics
-    	per function metrics
-    	
-    	random sample								./samples/random
-    	
-    	results of applying each function			./functions/<function>
-    	
-Balance
-	Input
-		properties set in configuration
-		statistics.xml
-		./functions/<function>
-		
-	Output
-		properties									console, ./artifacts/balanced-reducers/<function>/balanced.xml
-		number of reducers property					
-		where to find sequence files				
-
-		interval sequence file per function?		./artifacts/balanced-reducers/<function>/interval-m-*
-		text version of sequence file per function	./artifacts/balanced-reducers/<function>-txt/interval-m-*
+	DONE:	Inputs / Outputs per tool
+			
+			Statistics
+			    Input -- 
+			    	properties set in configuration
+			    Output -- 												
+			    	properties set in configuration, 			statistics.xml, console
+			    	tool properties, 
+			    	input data set metrics
+			    	sample metrics
+			    	per function metrics
+			    	
+			    	random sample								./samples/random
+			    	
+			    	results of applying each function			./functions/<function>
+			    	
+			Balance
+				Input
+					properties set in configuration
+					statistics.xml
+					./functions/<function>
+					
+				Output
+					properties									console, ./artifacts/balanced-reducers/<function>/balanced.xml
+					number of reducers property					
+					where to find sequence files				
+			
+					interval sequence file per function?		./artifacts/balanced-reducers/<function>/interval-m-*
+					text version of sequence file per function	./artifacts/balanced-reducers/<function>-txt/interval-m-*
 		
 	

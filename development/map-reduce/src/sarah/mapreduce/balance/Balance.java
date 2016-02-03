@@ -52,7 +52,7 @@ public class Balance extends Configured implements Tool {
 		job.setMapperClass(BalanceMapper.class);
 		job.setNumReduceTasks(0);
 		boolean success = job.waitForCompletion(true);
-		System.out.print("Balanced reducers using the following properties: ");
+		sarahMetricService.save();
 		sarahMetricService.print(System.out);
 		return success ? 0 : 1;
 	}
@@ -63,7 +63,7 @@ public class Balance extends Configured implements Tool {
 		// Keeps default output files from being created. 
 		LazyOutputFormat.setOutputFormatClass(job, TextOutputFormat.class);
 		
-		FileOutputFormat.setOutputPath(job, new Path(baseDir+".sarah/artifacts/balanced-reducers"));
+		FileOutputFormat.setOutputPath(job, new Path(baseDir+".sarah/artifacts/balance"));
 		job.setInputFormatClass(SequenceFileInputFormat.class); 
 		for (String function : SarahMetrics.sarahFunctions.getValue()) {
 			FileInputFormat.addInputPath(job, new Path(baseDir+".sarah/functions/"+function));

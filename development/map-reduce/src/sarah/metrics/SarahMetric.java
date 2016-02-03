@@ -10,7 +10,7 @@ import java.util.Set;
  */
 
 public class SarahMetric<TYPE> {
-	private TYPE value;
+	private TYPE value = null;
 	public String name;
 	public String description;
 	private boolean parameterizedByFunction = false;
@@ -38,8 +38,15 @@ public class SarahMetric<TYPE> {
 	public TYPE getValue() {
 		return value;
 	}
+	
+	@SuppressWarnings("unchecked")
 	public TYPE getValue(String functionName) {
-		return functionMetrics.get(functionName);
+		// Special case where value is a string and it is parameterized by function
+		if ((value!=null) && (value instanceof String) && (((String)value).contains("%func"))) {
+			return (TYPE) ((String)value).replace("%func", functionName);
+		} else {
+			return functionMetrics.get(functionName);
+		}
 	}
 	public Set<String> functionNames() {
 		Set<String> result = functionMetrics.keySet();
